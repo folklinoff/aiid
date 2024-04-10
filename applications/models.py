@@ -1,4 +1,3 @@
-from django.db import models
 from uuid import uuid4, UUID
 from enum import Enum
 from datetime import datetime
@@ -14,10 +13,12 @@ class SeatTypes(Enum):
     VIP = 'VIP'
 
 class Ticket:
-    def __init__(self, uuid: UUID, _seatType: SeatTypes, flightId: UUID) -> None:
+    def __init__(self, seatType: SeatTypes, flightId: UUID, seatPosition: str, cost: str, uuid: UUID=uuid4()) -> None:
         self.id: UUID = uuid if uuid is not None else uuid4()
-        self.seatType: SeatTypes = _seatType
+        self.seatType: SeatTypes = seatType
         self.flightId: UUID = flightId
+        self.seatPosition: str = seatPosition
+        self.cost: int = cost
         self.available: bool = True
         self.passengerId: UUID = uuid4()
     
@@ -25,11 +26,24 @@ class Ticket:
         return self.available
 
     def book(self, passengerId: UUID) -> None:
+        if self.canBook():
+            raise SeatNotAvailableException("cannot book ticket")
         self.available = False
         self.passengerId = passengerId
     
     def suits(self, neededType: SeatTypes) -> None:
         return self.seatType == neededType
+
+class CreateTicketDTO:
+    def __init__(self, seatType: SeatTypes, seatPosition: str, cost: str) -> None:
+        self.seatType: SeatTypes = seatType
+        self.seatPosition: str = seatPosition
+        self.cost: int = cost
+
+
+class BookTicketDTO:
+    def __init__(self, passenger_id):
+        self.passenger_id = passenger_id
 
 
 class FlightStates(Enum):
@@ -82,11 +96,13 @@ class Passenger:
 
 
 class Flight:
-    def __init__(self, departure_time: datetime, arrival_time: datetime) -> None:
+    def __init__(self, departure_time: datetime, arrival_time: datetime, departure_point: str, destination_point: str) -> None:
         self.id: UUID = uuid4()
         self.status: FlightStates = FlightStates.SCHEDULED
         self.departure_time: datetime = departure_time
         self.arrival_time: datetime = arrival_time
+        self.departure_point: str = departure_point
+        self.destination_point: str = destination_point
 
 
     def canBeBooked(self) -> bool:

@@ -15,6 +15,16 @@ class PassengerRepository:
             return passengers[passenger_id]
         return None 
 
+
+    def get_by_ids(self, passenger_ids: list[UUID]) -> list[Passenger]:
+        passenger_list = []
+        for passenger_id in passenger_ids:
+            passenger = passengers.get(passenger_id)
+            if passenger is None:
+                raise Exception()
+            passenger_list.append(passenger)
+        return passenger_list
+
     
     def delete(self, passenger_id) -> None:
         passengers.pop(passenger_id)

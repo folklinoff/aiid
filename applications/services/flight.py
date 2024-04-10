@@ -4,6 +4,8 @@ from applications.repository.ticket import TicketRepository
 from applications.repository.passenger import PassengerRepository
 from applications.models import Passenger
 from applications.models import Flight, Flights
+from uuid import UUID
+
 
 class FlightService:
     def __init__(self, flightRepo: FlightRepository, ticketRepo: TicketRepository, passengerRepo: PassengerRepository):
@@ -12,16 +14,26 @@ class FlightService:
         self.passenger_repo: PassengerRepository = passengerRepo
     
 
-    def getFlightById(self, flight_id) -> Flight:
+    def get_flight_by_id(self, flight_id: UUID) -> Flight:
         return self.flight_repository.getFlightById(flight_id)
     
-    def get_all_flights(self, limit, offset) -> Flights:
-        return Flights(self.flight_repository.getAllFlights(limit, offset))
-
     
+    def get_all_flights(self, limit, offset) -> Flights:
+        return Flights(self.flight_repository.getAllFlights(limit=limit, offset=offset))
+
+
+    def get_passengers(self, id):
+        if self.flight_repository.getFlightById(id) is None:
+            raise Exception('Flight not found')
+        passenger_ids = self.flight_repository.getAllPassengers(id)
+        passengers = self.passenger_repo.get_by_ids(passenger_ids)
+        return passengers
+
+
     def create(self, flight) -> Flight:
         return self.flight_repository.create(flight)
     
+
     def update(self, flight) -> Flight:
         return self.flight_repository.create(flight)
     
