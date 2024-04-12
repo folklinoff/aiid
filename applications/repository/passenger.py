@@ -6,8 +6,8 @@ class PassengerRepository:
         pass
 
 
-    def get_all(self, limit: int, offset: int) -> Passenger:
-        return sorted(list(passengers.items()))[offset: offset + limit]
+    def get_all(self, limit: int, offset: int) -> list[Passenger]:
+        return list(passengers.values())[offset: offset + limit]
 
 
     def get_by_id(self, passenger_id) -> Passenger:
@@ -31,6 +31,7 @@ class PassengerRepository:
     
 
     def create(self, passenger: Passenger) -> Passenger:
+        print(type(passenger))
         if passenger.id is None:
             passenger.id = uuid4()
         passengers[passenger.id] = passenger

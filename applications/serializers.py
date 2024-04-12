@@ -87,17 +87,17 @@ class GetMultipleItemsQuerySerializer(serializers.Serializer):
 
 class PassengerSerializer(serializers.Serializer):
     id = serializers.UUIDField()
-    first_name = serializers.StringRelatedField()
-    middle_name = serializers.StringRelatedField()
-    last_name = serializers.StringRelatedField()
+    first_name = serializers.CharField()
+    middle_name = serializers.CharField()
+    last_name = serializers.CharField()
     birthday = serializers.DateTimeField()
     gender = EnumField(choices=Gender)
 
 
 class NewPassengerSerializer(serializers.Serializer):
-    first_name = serializers.StringRelatedField()
-    middle_name = serializers.StringRelatedField()
-    last_name = serializers.StringRelatedField()
+    first_name = serializers.CharField()
+    middle_name = serializers.CharField()
+    last_name = serializers.CharField()
     birthday = serializers.DateTimeField()
     gender = EnumField(choices=Gender)
 

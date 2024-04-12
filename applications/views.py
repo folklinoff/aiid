@@ -154,4 +154,5 @@ class PassengerViewSet(ViewSet):
         if not query_ser.is_valid():
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
         passengers = self.passenger_service.get_all(**query_ser.data)
+        print(passengers)
         return Response(PassengerListSerializer(PassengerList(passengers)).data, status=status.HTTP_200_OK)

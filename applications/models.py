@@ -14,7 +14,7 @@ class SeatTypes(Enum):
     VIP = 'VIP'
 
 class Ticket:
-    def __init__(self, seat_type: SeatTypes, flight_id: UUID, seat_position: str, cost: str, uuid: UUID=uuid4()) -> None:
+    def __init__(self, seat_type: SeatTypes, flight_id: UUID, seat_position: str, cost: str, uuid: UUID=None) -> None:
         self.id: UUID = uuid if uuid is not None else uuid4()
         self.seat_type: SeatTypes = SeatTypes(seat_type)
         self.flight_id: UUID = flight_id
@@ -98,7 +98,7 @@ class Passenger:
         self.middle_name: str = middle_name
         self.last_name: str = last_name
         self.birthday: datetime = birthday
-        self.gender: Gender = gender
+        self.gender: Gender = Gender(gender)
         self.id = uuid4()
 
 

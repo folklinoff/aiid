@@ -12,7 +12,7 @@ class TicketRepository:
 
     
     def get_by_flight_id(self, flight_id: int, limit: int, offset: int) -> list[Ticket]:
-        return sorted([ticket for ticket in tickets if ticket.flightId == flight_id])[offset:offset+limit]
+        return [ticket for ticket in tickets.values() if ticket.flight_id == flight_id][offset:offset+limit]
 
 
     def delete(self, ticket_id: int) -> None:
