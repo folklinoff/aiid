@@ -27,7 +27,6 @@ class TicketService:
 
     def book_ticket(self, ticket_id, passenger_id) -> Ticket:
         ticket = self.ticket_repository.get_by_id(ticket_id)
-
         if ticket is None:
             raise TicketDoesntExistException('ticket with this id doesn\'t exist')
         

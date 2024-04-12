@@ -122,7 +122,7 @@ class TicketsViewSet(ViewSet):
         body_ser = BookTicketDTOSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        ticket = self.ticketsService.book_ticket(UUID(id), body_ser["passenger_id"])
+        ticket = self.ticketsService.book_ticket(UUID(id), UUID(body_ser.data["passenger_id"]))
         return Response(TicketSerializer(ticket).data, status=status.HTTP_200_OK)
 
 
@@ -154,5 +154,4 @@ class PassengerViewSet(ViewSet):
         if not query_ser.is_valid():
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
         passengers = self.passenger_service.get_all(**query_ser.data)
-        print(passengers)
         return Response(PassengerListSerializer(PassengerList(passengers)).data, status=status.HTTP_200_OK)

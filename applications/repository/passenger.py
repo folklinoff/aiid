@@ -11,7 +11,7 @@ class PassengerRepository:
 
 
     def get_by_id(self, passenger_id) -> Passenger:
-        if passenger_id in passengers:
+        if passenger_id in passengers.keys():
             return passengers[passenger_id]
         return None 
 
@@ -31,7 +31,6 @@ class PassengerRepository:
     
 
     def create(self, passenger: Passenger) -> Passenger:
-        print(type(passenger))
         if passenger.id is None:
             passenger.id = uuid4()
         passengers[passenger.id] = passenger
