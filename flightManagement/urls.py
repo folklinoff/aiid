@@ -16,7 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from applications.views import FlightsViewSet, TicketsViewSet
+from applications.views import FlightsViewSet, TicketsViewSet, PassengerViewSet
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path('api/flights/', FlightsViewSet.as_view({'get': 'list', 'post': 'create'}), name='flights-list-create'),
@@ -24,5 +25,7 @@ urlpatterns = [
     path('api/flights/<str:id>/tickets', FlightsViewSet.as_view({'get': 'list_tickets', 'post': 'create_ticket'}), name='flights-get-tickets'),
     path('api/flights/<str:id>/passengers', FlightsViewSet.as_view({'get': 'list_passengers'}), name='flights-get-passengers'),
     path('api/tickets/<str:id>/book', TicketsViewSet.as_view({'post': 'book'}), name='book-ticket'),
-    path('api/passengers', TicketsViewSet.as_view({'post': 'create'}), name='create-passenger'),
+    path('api/passengers', PassengerViewSet.as_view({'post': 'create', 'get': 'list'}), name='create-list-passengers'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
 ]

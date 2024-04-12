@@ -7,7 +7,7 @@ class PassengerRepository:
 
 
     def get_all(self, limit: int, offset: int) -> Passenger:
-        return passengers.items()[offset: offset + limit]
+        return sorted(list(passengers.items()))[offset: offset + limit]
 
 
     def get_by_id(self, passenger_id) -> Passenger:

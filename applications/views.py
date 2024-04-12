@@ -2,23 +2,60 @@ from django.shortcuts import render
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Ticket, Passenger
+from .models import Ticket, Passenger, PassengerList, TicketList
 from rest_framework.decorators import action
 from applications.factory import FlightServiceFactory, TicketServiceFactory, PassengerServiceFactory
-from applications.serializers import GetFlightsQuerySerializer, FlightsSerializer, NewFlightSerializer, FlightDetailsSerializer, NewTicketSerializer, TicketSerializer, BookTicketDTOSerializer, TicketsListSerializer, PassengerListSerializer, PassengerSerializer, NewPassengerSerializer
+from applications.serializers import *
 from uuid import UUID
+from drf_spectacular.utils import extend_schema_view, extend_schema
 
+@extend_schema_view(
+    list=extend_schema(summary='Flights list', 
+                    parameters=[GetMultipleItemsQuerySerializer], auth=False,
+                    responses={
+                        status.HTTP_200_OK: FlightsSerializer,
+                    }),
+    create=extend_schema(summary='New flight', 
+                    request=NewFlightSerializer,
+                    responses={
+                        status.HTTP_201_CREATED: FlightDetailsSerializer,
+                    }),
+    retrieve=extend_schema(summary='One flight', 
+                    description='Allows to get one flight by it\'s ID or returns error',
+                    responses={
+                        status.HTTP_200_OK: FlightDetailsSerializer,
+                    }),
+    update=extend_schema(summary='New flight', 
+                    request=NewChangeFlightStatusDTOSerializer,
+                    responses={
+                        status.HTTP_200_OK: FlightDetailsSerializer,
+                    }),
+    create_ticket=extend_schema(summary='New ticket boom', 
+                    request=NewTicketSerializer,
+                    responses={
+                        status.HTTP_201_CREATED: TicketSerializer,
+                    }),
+    list_tickets=extend_schema(summary='Get all tickets', 
+                    request=GetMultipleItemsQuerySerializer,
+                    responses={
+                        status.HTTP_200_OK: TicketsListSerializer,
+                    }),
+    list_passengers=extend_schema(summary='Get all passenger for the flight', 
+                    request=GetMultipleItemsQuerySerializer,
+                    responses={
+                        status.HTTP_200_OK: PassengerListSerializer,
+                    }),
+)
 class FlightsViewSet(ViewSet):
-    flightService = FlightServiceFactory.create_flight()
-    ticketService = TicketServiceFactory.create_ticket()
-    passengerService = PassengerServiceFactory.create_passenger()
+    flight_service = FlightServiceFactory.create_flight()
+    ticket_service = TicketServiceFactory.create_ticket()
+    passenger_service = PassengerServiceFactory.create_passenger()
 
     def list(self, request):
-        query_ser = GetFlightsQuerySerializer(data=request.query_params)
+        query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
         if not query_ser.is_valid():
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        print({**query_ser.data})
-        flights = self.flightService.get_all_flights(**query_ser.data)
+        flights = self.flight_service.get_all_flights(**query_ser.data)
         return Response(FlightsSerializer(flights).data, status=status.HTTP_200_OK)
     
     
@@ -26,63 +63,95 @@ class FlightsViewSet(ViewSet):
         request_ser = NewFlightSerializer(data=request.data)
         if not request_ser.is_valid():
             return Response(request_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        flight = self.flightService.create(request_ser.save())
+        flight = self.flight_service.create(request_ser.save())
         return Response(FlightDetailsSerializer(flight).data, status=status.HTTP_201_CREATED)
     
 
     def retrieve(self, _, id=None):
-        flight = self.flightService.get_flight_by_id(UUID(id))
+        flight = self.flight_service.get_flight_by_id(UUID(id))
         return Response(FlightDetailsSerializer(flight).data, status=status.HTTP_200_OK)
 
 
     def update(self, request):
-        body_ser = NewFlightSerializer(data=request.data)
+        body_ser = NewChangeFlightStatusDTOSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        flight = self.flightService.update(body_ser.save())
+        flight = self.flight_service.change_status(**body_ser.data)
         return Response(FlightDetailsSerializer(flight).data, status=status.HTTP_200_OK)
 
 
     @action(detail=True)
     def create_ticket(self, request, id=None):
-        body_ser = NewTicketSerializer(data=request.body)
+        body_ser = NewTicketSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        ticket = Ticket(**body_ser.data, flightId=UUID(id))
-        ticket = self.ticketService.create(ticket)
+        ticket = self.ticket_service.create(Ticket(**body_ser.data, flight_id=UUID(id)))
         return Response(TicketSerializer(ticket).data, status=status.HTTP_201_CREATED)
 
 
     @action(detail=False)
-    def list_tickets(self, _, id=None):
-        tickets = self.ticketService.get_by_flight_id(UUID(id))
-        return Response(TicketsListSerializer(tickets), status=status.HTTP_200_OK)
+    def list_tickets(self, request, id=None):
+        query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
+        if not query_ser.is_valid():
+            return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        tickets = self.ticket_service.get_by_flight_id(UUID(id), **query_ser.data)
+        return Response(TicketsListSerializer(TicketList(tickets)).data, status=status.HTTP_200_OK)
     
 
     @action(detail=False)
-    def list_passengers(self, _, id=None):
-        passengers = self.flightService.get_passengers(UUID(id))
-        return Response(PassengerListSerializer(passengers).data, status=status.HTTP_200_OK)
+    def list_passengers(self, request, id=None):
+        query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
+        if not query_ser.is_valid():
+            return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        passengers = self.flight_service.get_passengers(UUID(id), **query_ser.data)
+        return Response(PassengerListSerializer(PassengerList(passengers)).data, status=status.HTTP_200_OK)
 
 
+@extend_schema_view(
+    book=extend_schema(summary='Flights list', 
+                    request=BookTicketDTOSerializer, auth=False, 
+                    responses={
+                        status.HTTP_200_OK: TicketSerializer,
+                    }),
+)
 class TicketsViewSet(ViewSet):
     ticketsService = TicketServiceFactory.create_ticket()
 
     @action(detail=True)
     def book(self, request, id=None):
-        body_ser = BookTicketDTOSerializer(data=request.body)
+        body_ser = BookTicketDTOSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        ticket = self.ticketsService.bookTicket(UUID(id), body_ser["passenger_id"])
+        ticket = self.ticketsService.book_ticket(UUID(id), body_ser["passenger_id"])
         return Response(TicketSerializer(ticket).data, status=status.HTTP_200_OK)
 
 
+@extend_schema_view(
+    list=extend_schema(summary='Passenger list', 
+                    parameters=[GetMultipleItemsQuerySerializer], auth=False,
+                    responses={
+                        status.HTTP_200_OK: PassengerListSerializer,
+                    }),
+    create=extend_schema(summary='New passenger', 
+                    request=NewPassengerSerializer,
+                    responses={
+                        status.HTTP_201_CREATED: PassengerSerializer,
+                    }),
+)
 class PassengerViewSet(ViewSet):
-    passengerService = PassengerServiceFactory.create_passenger()
+    passenger_service = PassengerServiceFactory.create_passenger()
 
     def create(self, request):
         body_ser = NewPassengerSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        passenger = self.passengerService.create(Passenger(**body_ser.data))
+        passenger = self.passenger_service.create(Passenger(**body_ser.data))
         return Response(PassengerSerializer(passenger).data, status=status.HTTP_201_CREATED)
+    
+
+    def list(self, request):
+        query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
+        if not query_ser.is_valid():
+            return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        passengers = self.passenger_service.get_all(**query_ser.data)
+        return Response(PassengerListSerializer(PassengerList(passengers)).data, status=status.HTTP_200_OK)

@@ -1,6 +1,7 @@
 from uuid import uuid4, UUID
 from enum import Enum
 from datetime import datetime
+import time
 
 
 class Gender(Enum):
@@ -13,31 +14,37 @@ class SeatTypes(Enum):
     VIP = 'VIP'
 
 class Ticket:
-    def __init__(self, seatType: SeatTypes, flightId: UUID, seatPosition: str, cost: str, uuid: UUID=uuid4()) -> None:
+    def __init__(self, seat_type: SeatTypes, flight_id: UUID, seat_position: str, cost: str, uuid: UUID=uuid4()) -> None:
         self.id: UUID = uuid if uuid is not None else uuid4()
-        self.seatType: SeatTypes = seatType
-        self.flightId: UUID = flightId
-        self.seatPosition: str = seatPosition
+        self.seat_type: SeatTypes = SeatTypes(seat_type)
+        self.flight_id: UUID = flight_id
+        self.seat_position: str = seat_position
         self.cost: int = cost
         self.available: bool = True
-        self.passengerId: UUID = uuid4()
+        self.passenger_id: UUID = uuid4()
     
-    def canBook(self) -> bool:
+    def can_book(self) -> bool:
         return self.available
 
-    def book(self, passengerId: UUID) -> None:
-        if self.canBook():
+    def book(self, passenger_id: UUID) -> None:
+        if self.can_book():
             raise SeatNotAvailableException("cannot book ticket")
         self.available = False
-        self.passengerId = passengerId
+        self.passenger_id = passenger_id
     
-    def suits(self, neededType: SeatTypes) -> None:
-        return self.seatType == neededType
+    def suits(self, needed_type: SeatTypes) -> None:
+        return self.seat_type == needed_type
+
+
+class TicketList:
+    def __init__(self, tickets: list[Ticket]):
+        self.tickets = tickets
+
 
 class CreateTicketDTO:
-    def __init__(self, seatType: SeatTypes, seatPosition: str, cost: str) -> None:
-        self.seatType: SeatTypes = seatType
-        self.seatPosition: str = seatPosition
+    def __init__(self, seat_type: SeatTypes, seat_position: str, cost: str, flight_id: UUID) -> None:
+        self.seat_type: SeatTypes = seat_type
+        self.seat_position: str = seat_position
         self.cost: int = cost
 
 
@@ -86,13 +93,18 @@ class CannotBookTicketOnThisFlight(Exception):
 
 
 class Passenger:
-    def __init__(self, firstName: str, middleName: str, lastName: str, birthday: datetime, gender: Gender) -> None:
-        self.firstName: str = firstName
-        self.middleName: str = middleName
-        self.lastName: str = lastName
+    def __init__(self, first_name: str, middle_name: str, last_name: str, birthday: datetime, gender: Gender) -> None:
+        self.first_name: str = first_name
+        self.middle_name: str = middle_name
+        self.last_name: str = last_name
         self.birthday: datetime = birthday
         self.gender: Gender = gender
         self.id = uuid4()
+
+
+class PassengerList:
+    def __init__(self, passengers: list[Passenger]):
+        self.passengers = passengers
 
 
 class Flight:
@@ -105,7 +117,7 @@ class Flight:
         self.destination_point: str = destination_point
 
 
-    def canBeBooked(self) -> bool:
+    def can_be_booked(self) -> bool:
         return self.status == FlightStates.DELAYED or self.status == FlightStates.SCHEDULED
 
 
@@ -123,6 +135,7 @@ class Flight:
         }
         return {old, new} in availableStatusTranformations
 
+
     def setStatus(self, val: FlightStates) -> None:
         if not isinstance(val, FlightStates):
             raise TypeError('status must be an instance of flightStates Enum')
@@ -132,8 +145,38 @@ class Flight:
         if val == FlightStates.DELAYED:
             print(f'flight with id {self.id} has been delayed')
         self.status = val
+    
+
+    def reschedule(self, departure_time: datetime, arrival_time: datetime):
+        if (departure_time is None) or (arrival_time is None):
+            raise Exception("both departure time and arrival time should be specified")
+        if self.departure_time > departure_time:
+            raise Exception("new departure time should be later then the current")
+        if departure_time > arrival_time:
+            raise Exception("departure time should be earlier")
+        if arrival_time - departure_time != self.arrival_time - self.departure_time:
+            raise Exception(f"flight duration cannot be changed (old: {self.arrival_time} - {self.departure_time} = {self.arrival_time - self.departure_time}; new: {arrival_time} - {departure_time} = {arrival_time - departure_time})")
+        self.departure_time = departure_time
+        self.arrival_time = arrival_time
+
+
+class ChangeFlightStatusDTO:
+    def __init__(self, status, departure_time=None, arrival_time=None):
+        self.status: FlightStates = FlightStates(status)
+        self.departure_time: datetime = departure_time
+        self.arrival_time: datetime = arrival_time
 
 
 class Flights:
     def __init__(self, flights: list[Flight]) -> None:
         self.flights = flights
+
+
+class Operation:
+    id: UUID
+    done: bool
+
+    def __init__(self, id: UUID, done: bool = False, result = None) -> None:
+        self.id = id
+        self.done = done
+        self.result = result

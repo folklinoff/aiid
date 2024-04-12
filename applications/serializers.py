@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Flight, SeatTypes, Ticket, FlightStates, CreateTicketDTO, Gender, BookTicketDTO
+from .models import Flight, SeatTypes, Ticket, FlightStates, CreateTicketDTO, Gender, BookTicketDTO, ChangeFlightStatusDTO, Passenger
 from rest_enumfield import EnumField
 
 
@@ -7,14 +7,14 @@ class TicketSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     seat_type = EnumField(choices=SeatTypes)
     flight_id = serializers.UUIDField()
-    seat_position = serializers.StringRelatedField()
+    seat_position = serializers.CharField()
     cost = serializers.IntegerField()
     available = serializers.BooleanField()
     passenger_id = serializers.UUIDField()
 
 
 class TicketsListSerializer(serializers.Serializer):
-    tickets = TicketSerializer()
+    tickets = TicketSerializer(many=True)
 
 
 class GetTicketsQuerySerializer(serializers.Serializer):
@@ -24,7 +24,7 @@ class GetTicketsQuerySerializer(serializers.Serializer):
 
 class NewTicketSerializer(serializers.Serializer):
     seat_type = EnumField(choices=SeatTypes)
-    seat_position = serializers.StringRelatedField()
+    seat_position = serializers.CharField()
     cost = serializers.IntegerField()
 
     def create(self, validated_data):
@@ -57,6 +57,15 @@ class FlightDetailsSerializer(serializers.Serializer):
     destination_point = serializers.CharField()
 
 
+class NewChangeFlightStatusDTOSerializer(serializers.Serializer):
+    status = EnumField(choices=FlightStates)
+    departure_time = serializers.DateTimeField(required=False)
+    arrival_time = serializers.DateTimeField(required=False)
+    
+    def create(self, validated_data):
+        return ChangeFlightStatusDTO(**validated_data)
+
+
 class FlightsSerializer(serializers.Serializer):
     flights = FlightDetailsSerializer(many=True)
 
@@ -71,7 +80,7 @@ class NewFlightSerializer(serializers.Serializer):
         return Flight(**validated_data)
 
 
-class GetFlightsQuerySerializer(serializers.Serializer):
+class GetMultipleItemsQuerySerializer(serializers.Serializer):
     limit = serializers.IntegerField(min_value=10, max_value=50, default=20, required=False)
     offset = serializers.IntegerField(min_value=0, default=0, required=False)
 
@@ -93,7 +102,7 @@ class NewPassengerSerializer(serializers.Serializer):
     gender = EnumField(choices=Gender)
 
     def create(self, validated_data):
-        return CreateTicketDTO(**validated_data)
+        return Passenger(**validated_data)
 
 
 class PassengerListSerializer(serializers.Serializer):

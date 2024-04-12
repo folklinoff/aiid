@@ -40,7 +40,7 @@ class TicketRepositoryFactory:
 
 flightService = FlightService(FlightRepositoryFactory.create_flight(), TicketRepositoryFactory.create_ticket(), PassengerRepositoryFactory.create_passenger())
 passengerService = PassengerService(PassengerRepositoryFactory.create_passenger())
-ticketService = TicketService(TicketRepositoryFactory.create_ticket(), FlightRepositoryFactory.create_flight())
+ticketService = TicketService(TicketRepositoryFactory.create_ticket(), FlightRepositoryFactory.create_flight(), PassengerRepositoryFactory.create_passenger())
 
 
 class FlightServiceFactory:

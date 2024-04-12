@@ -11,8 +11,8 @@ class TicketRepository:
         return tickets[ticket_id] if ticket_id in tickets else None
 
     
-    def get_by_flight_id(self, flight_id: int) -> list[Ticket]:
-        return [ticket for ticket in tickets if ticket.flightId == flight_id]
+    def get_by_flight_id(self, flight_id: int, limit: int, offset: int) -> list[Ticket]:
+        return sorted([ticket for ticket in tickets if ticket.flightId == flight_id])[offset:offset+limit]
 
 
     def delete(self, ticket_id: int) -> None:
@@ -26,4 +26,4 @@ class TicketRepository:
         return ticket
 
 
-tickets: dict[UUID, Ticket] = []
+tickets: dict[UUID, Ticket] = {}
