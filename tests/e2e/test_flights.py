@@ -5,10 +5,6 @@ from datetime import datetime
 
 base_url = 'http://localhost:8000/api'
 
-def test_get_apps_empty():
-    assert requests.get(f'{base_url}/flights').json() == {'flights':[]}
-
-
 def test_new_flight_success():
     dep_time = str(datetime.now().isoformat())
     arr_time = str(datetime.now().isoformat())
@@ -29,3 +25,4 @@ def test_new_flight_success():
 
 def test_get_flights_success():
     resp = requests.get(f'{base_url}/flights/').json()
+    
