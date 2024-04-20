@@ -2,6 +2,7 @@ from typing import Any
 from applications.services.flight import FlightService
 from applications.services.passenger import PassengerService
 from applications.services.ticket import TicketService
+from applications.services.operations import OperationsService
 from applications.repository.flight import FlightRepository
 from applications.repository.airport import AirportRepository
 from applications.repository.ticket import TicketRepository
@@ -38,10 +39,16 @@ class TicketRepositoryFactory:
         return ticketRepository
 
 
-flightService = FlightService(FlightRepositoryFactory.create_flight(), TicketRepositoryFactory.create_ticket(), PassengerRepositoryFactory.create_passenger())
+operationService = OperationsService()
+class OperationServiceFactory:
+    @staticmethod
+    def create_operation():
+        return operationService
+
+
+flightService = FlightService(FlightRepositoryFactory.create_flight(), TicketRepositoryFactory.create_ticket(), PassengerRepositoryFactory.create_passenger(), OperationServiceFactory.create_operation())
 passengerService = PassengerService(PassengerRepositoryFactory.create_passenger())
 ticketService = TicketService(TicketRepositoryFactory.create_ticket(), FlightRepositoryFactory.create_flight(), PassengerRepositoryFactory.create_passenger())
-
 
 class FlightServiceFactory:
     @staticmethod

@@ -1,6 +1,6 @@
 from uuid import uuid4, UUID
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 
 
@@ -27,7 +27,7 @@ class Ticket:
         return self.available
 
     def book(self, passenger_id: UUID) -> None:
-        if self.can_book():
+        if not self.can_book():
             raise SeatNotAvailableException("cannot book ticket")
         self.available = False
         self.passenger_id = passenger_id

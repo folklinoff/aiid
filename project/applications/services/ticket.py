@@ -3,8 +3,7 @@ from applications.models import Ticket
 from applications.repository.ticket import TicketRepository
 from applications.repository.flight import FlightRepository
 from applications.repository.passenger import PassengerRepository
-from applications.models import SeatNotAvailableException, TicketDoesntExistException, PassengerDoesntExistException, CannotBuyTicketException, CannotBookTicketOnThisFlight
-from applications.models import FlightStates
+from applications.models import *
 
 class TicketService:
     def __init__(self, ticket_repository: TicketRepository, flight_repository: FlightRepository, passenger_repository: PassengerRepository) -> None:
@@ -42,7 +41,7 @@ class TicketService:
 
         ticket.book(passenger_id)
         self.ticket_repository.create(ticket)
-        self.flight_repository.add_passenger(ticket)
+        self.flight_repository.add_passenger(ticket.flight_id, passenger_id)
 
         return ticket
     

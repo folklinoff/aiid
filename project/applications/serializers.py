@@ -107,3 +107,9 @@ class NewPassengerSerializer(serializers.Serializer):
 
 class PassengerListSerializer(serializers.Serializer):
     passengers = PassengerSerializer(many=True)
+
+
+class OperationSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    done = serializers.BooleanField()
+    result = serializers.JSONField(default={})

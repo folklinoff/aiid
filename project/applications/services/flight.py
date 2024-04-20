@@ -1,14 +1,19 @@
-from applications.models import Ticket
+from uuid import UUID
+from typing import Callable
+
+from applications.models import *
+
 from applications.repository.flight import FlightRepository
 from applications.repository.ticket import TicketRepository
 from applications.repository.passenger import PassengerRepository
-from applications.models import Passenger
-from applications.models import Flight, Flights, FlightStates
-from uuid import UUID
 
+from applications.scheduler import scheduler, DateTrigger
+
+from .operations import OperationsService
 
 class FlightService:
-    def __init__(self, flightRepo: FlightRepository, ticketRepo: TicketRepository, passengerRepo: PassengerRepository):
+    def __init__(self, flightRepo: FlightRepository, ticketRepo: TicketRepository, passengerRepo: PassengerRepository, ops_service: OperationsService):
+        self.ops_service: OperationsService = ops_service
         self.flight_repository: FlightRepository = flightRepo
         self.ticket_repository: TicketRepository = ticketRepo
         self.passenger_repo: PassengerRepository = passengerRepo
@@ -22,12 +27,21 @@ class FlightService:
         return Flights(self.flight_repository.get_all_flights(limit=limit, offset=offset))
 
 
-    def get_passengers(self, id, limit: int, offset: int):
+    def list_passengers(self, id, limit: int, offset: int):
         if self.flight_repository.get_flight_by_id(id) is None:
             raise Exception('Flight not found')
-        passenger_ids = self.flight_repository.get_all_passengers(id, limit, offset)
-        passengers = self.passenger_repo.get_by_ids(passenger_ids)
-        return passengers
+        operation_id = self.ops_service.create_operation()
+        scheduler.add_job(self._list_passengers(limit, offset),
+                          trigger=DateTrigger(), args=(operation_id, ),)
+        return operation_id
+
+
+    def _list_passengers(self, limit: int, offset: int) -> Callable[[UUID], None]:
+        def real_list_passengers(operation_id: UUID):
+            passenger_ids = self.flight_repository.get_all_passengers(id, limit, offset)
+            passengers = self.passenger_repo.get_by_ids(passenger_ids)
+            self.ops_service.finish_operation(operation_id, passengers)
+        return real_list_passengers
 
 
     def create(self, flight) -> Flight:
@@ -43,10 +57,6 @@ class FlightService:
         self.flight_repository.create(flight)
 
         return self.flight_repository.get_flight_by_id(flight_id)
-
-
-    def list_passengers(self, flight_id) -> list[Passenger]:
-        return [self.passenger_repo.get_by_id(ticket.passenger_id) for ticket in self.list_tickets(flight_id)]
 
 
     def list_tickets(self, flight_id) -> list[Ticket]:

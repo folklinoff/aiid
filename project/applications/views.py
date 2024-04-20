@@ -1,13 +1,16 @@
-from django.shortcuts import render
-from rest_framework.viewsets import ViewSet
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Ticket, Passenger, PassengerList, TicketList
-from rest_framework.decorators import action
-from applications.factory import FlightServiceFactory, TicketServiceFactory, PassengerServiceFactory
-from applications.serializers import *
 from uuid import UUID
+
+from django.shortcuts import render
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
 from drf_spectacular.utils import extend_schema_view, extend_schema
+
+from .models import Ticket, Passenger, PassengerList, TicketList
+from applications.factory import *
+from applications.serializers import *
 
 @extend_schema_view(
     list=extend_schema(summary='Flights list', 
@@ -68,7 +71,7 @@ class FlightsViewSet(ViewSet):
     
 
     def retrieve(self, _, id=None):
-        flight = self.flight_service.get_flight_by_id(UUID(id))
+        flight = self.flight_service.get_flight_by_id(id)
         return Response(FlightDetailsSerializer(flight).data, status=status.HTTP_200_OK)
 
 
@@ -85,7 +88,7 @@ class FlightsViewSet(ViewSet):
         body_ser = NewTicketSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        ticket = self.ticket_service.create(Ticket(**body_ser.data, flight_id=UUID(id)))
+        ticket = self.ticket_service.create(Ticket(**body_ser.data, flight_id=id))
         return Response(TicketSerializer(ticket).data, status=status.HTTP_201_CREATED)
 
 
@@ -94,7 +97,7 @@ class FlightsViewSet(ViewSet):
         query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
         if not query_ser.is_valid():
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        tickets = self.ticket_service.get_by_flight_id(UUID(id), **query_ser.data)
+        tickets = self.ticket_service.get_by_flight_id(id, **query_ser.data)
         return Response(TicketsListSerializer(TicketList(tickets)).data, status=status.HTTP_200_OK)
     
 
@@ -103,8 +106,8 @@ class FlightsViewSet(ViewSet):
         query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
         if not query_ser.is_valid():
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        passengers = self.flight_service.get_passengers(UUID(id), **query_ser.data)
-        return Response(PassengerListSerializer(PassengerList(passengers)).data, status=status.HTTP_200_OK)
+        operation_id = self.flight_service.list_passengers(id, **query_ser.data)
+        return Response({'operation_id': operation_id})
 
 
 @extend_schema_view(
@@ -122,7 +125,7 @@ class TicketsViewSet(ViewSet):
         body_ser = BookTicketDTOSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        ticket = self.ticketsService.book_ticket(UUID(id), UUID(body_ser.data["passenger_id"]))
+        ticket = self.ticketsService.book_ticket(id, UUID(body_ser.data["passenger_id"]))
         return Response(TicketSerializer(ticket).data, status=status.HTTP_200_OK)
 
 
@@ -155,3 +158,20 @@ class PassengerViewSet(ViewSet):
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
         passengers = self.passenger_service.get_all(**query_ser.data)
         return Response(PassengerListSerializer(PassengerList(passengers)).data, status=status.HTTP_200_OK)
+
+
+@extend_schema_view(
+    get=extend_schema(summary='Get information about operation',
+                      responses=OperationSerializer, auth=False)
+)
+class OperationsViewSet(ViewSet):
+    ops_service = OperationServiceFactory.create_operation()
+
+    def get(self, _, id: UUID):
+        try:
+            operation = self.ops_service.get_operation(id)
+            return Response(OperationSerializer(operation).data)
+        except KeyError as e:
+            raise NotFound(e)
+        except ValueError as e:
+            raise ValidationError(e)

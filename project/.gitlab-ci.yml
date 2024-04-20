@@ -1,0 +1,36 @@
+stages:
+  - test
+  - build
+  - deploy
+
+run-unit-tests:
+  stage: test
+  image: python:3.12
+  script:
+    - pip install -r requirements.txt
+    - pip install pytest
+    - pytest
+
+run-int-tests:
+  stage: test
+  image: python:3.12
+  needs:
+    - run-unit-tests
+  script:
+    - |
+      pip install -r requirements.txt
+      pip install pytest
+    - pytest
+
+build-and-push:
+  stage: build
+  needs:
+    - run-unit-tests
+      run-int-tests
+  before_script:
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  script:
+    - docker build . -t $DOCKER_USERNAME/flight-management:latest
+    - docker tag $DOCKER_USERNAME/flight-management:latest $DOCKER_USERNAME/flight-management:$CI_PIPELINE_IID
+    - docker push $DOCKER_USERNAME/flight-management:latest
+    - docker push $DOCKER_USERNAME/flight-management:$CI_PIPELINE_IID
