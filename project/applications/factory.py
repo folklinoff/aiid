@@ -9,34 +9,34 @@ from applications.repository.ticket import TicketRepository
 from applications.repository.passenger import PassengerRepository
 
 
-flightRepository = FlightRepository()
-airportRepository = AirportRepository()
-ticketRepository = TicketRepository()
-passengerRepository = PassengerRepository()
+flight_repository = FlightRepository()
+airport_repository = AirportRepository()
+ticket_repository = TicketRepository()
+passenger_repository = PassengerRepository()
 
 
 class FlightRepositoryFactory:
     @staticmethod
     def create_flight():
-        return flightRepository
+        return flight_repository
 
 
 class AirportRepositoryFactory:
     @staticmethod
     def create_airport():
-        return airportRepository
+        return airport_repository
     
 
 class PassengerRepositoryFactory:
     @staticmethod
     def create_passenger():
-        return passengerRepository
+        return passenger_repository
 
 
 class TicketRepositoryFactory:
     @staticmethod
     def create_ticket():
-        return ticketRepository
+        return ticket_repository
 
 
 operationService = OperationsService()
@@ -46,23 +46,23 @@ class OperationServiceFactory:
         return operationService
 
 
-flightService = FlightService(FlightRepositoryFactory.create_flight(), TicketRepositoryFactory.create_ticket(), PassengerRepositoryFactory.create_passenger(), OperationServiceFactory.create_operation())
-passengerService = PassengerService(PassengerRepositoryFactory.create_passenger())
-ticketService = TicketService(TicketRepositoryFactory.create_ticket(), FlightRepositoryFactory.create_flight(), PassengerRepositoryFactory.create_passenger())
+flight_service = FlightService(FlightRepositoryFactory.create_flight(), TicketRepositoryFactory.create_ticket(), PassengerRepositoryFactory.create_passenger(), OperationServiceFactory.create_operation())
+passenger_service = PassengerService(PassengerRepositoryFactory.create_passenger())
+ticket_service = TicketService(TicketRepositoryFactory.create_ticket(), FlightRepositoryFactory.create_flight(), PassengerRepositoryFactory.create_passenger())
 
 class FlightServiceFactory:
     @staticmethod
     def create_flight():
-        return flightService
+        return flight_service
 
 
 class PassengerServiceFactory:
     @staticmethod
     def create_passenger():
-        return passengerService
+        return passenger_service
 
 
 class TicketServiceFactory:
     @staticmethod
     def create_ticket():
-        return ticketService
+        return ticket_service
