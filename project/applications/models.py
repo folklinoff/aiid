@@ -121,11 +121,11 @@ class Flight:
         return self.status == FlightStates.DELAYED or self.status == FlightStates.SCHEDULED
 
 
-    def isStatusTransformationPossible(self, old: FlightStates, new: FlightStates) -> bool:        
+    def is_status_transformation_possible(self, old: FlightStates, new: FlightStates) -> bool:        
         if old == new:
             return True
         
-        availableStatusTranformations = {
+        available_status_tranformations = {
             frozenset([FlightStates.SCHEDULED, FlightStates.DELAYED]),
             frozenset([FlightStates.SCHEDULED, FlightStates.READY]),
             frozenset([FlightStates.DELAYED, FlightStates.CANCELLED]),
@@ -133,13 +133,13 @@ class Flight:
             frozenset([FlightStates.READY, FlightStates.IN_PROGRESS]),
             frozenset([FlightStates.IN_PROGRESS, FlightStates.FINISHED])
         }
-        return {old, new} in availableStatusTranformations
+        return {old, new} in available_status_tranformations
 
 
     def setStatus(self, val: FlightStates) -> None:
         if not isinstance(val, FlightStates):
             raise TypeError('status must be an instance of flightStates Enum')
-        if not self.isStatusTransformationPossible(self.status, val):
+        if not self.is_status_transformation_possible(self.status, val):
             raise StatusChangeException('changing to this status is illegal')
         # заглушка для оповещения о задержке
         if val == FlightStates.DELAYED:
