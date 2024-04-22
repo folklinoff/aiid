@@ -11,7 +11,7 @@ class FlightRepository:
     
     
     def get_flight_by_id(self, id: UUID) -> Flight | None:
-        return flights.get(id)
+        return flights[id]
     
 
     def add_passenger(self, id: UUID, passenger_id: UUID):

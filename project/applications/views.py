@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from drf_spectacular.utils import extend_schema_view, extend_schema
 
-from .models import Ticket, Passenger, PassengerList, TicketList
+from .models import *
 from applications.factory import *
 from applications.serializers import *
 
@@ -58,7 +58,12 @@ class FlightsViewSet(ViewSet):
         query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
         if not query_ser.is_valid():
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        flights = self.flight_service.get_all_flights(**query_ser.data)
+        try:
+            flights = self.flight_service.get_all_flights(**query_ser.data)
+        except KeyError as e:
+            raise NotFound(e)
+        except ValueError as e:
+            raise ValidationError(e)
         return Response(FlightsSerializer(flights).data, status=status.HTTP_200_OK)
     
     
@@ -66,12 +71,20 @@ class FlightsViewSet(ViewSet):
         request_ser = NewFlightSerializer(data=request.data)
         if not request_ser.is_valid():
             return Response(request_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        flight = self.flight_service.create(request_ser.save())
+        try:
+            flight = self.flight_service.create(request_ser.save())
+        except (ValueError, InvalidFlightTimesError) as e:
+            raise ValidationError(e)
         return Response(FlightDetailsSerializer(flight).data, status=status.HTTP_201_CREATED)
     
 
     def retrieve(self, _, id=None):
-        flight = self.flight_service.get_flight_by_id(id)
+        try:
+            flight = self.flight_service.get_flight_by_id(id)
+        except KeyError as e:
+            raise NotFound(e)
+        except ValueError as e:
+            raise ValidationError(e)
         return Response(FlightDetailsSerializer(flight).data, status=status.HTTP_200_OK)
 
 
@@ -80,7 +93,12 @@ class FlightsViewSet(ViewSet):
         body_ser = NewChangeFlightStatusDTOSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        flight = self.flight_service.change_status(flight_id=id, **body_ser.data)
+        try:
+            flight = self.flight_service.change_status(flight_id=id, **(body_ser.save().__dict__))
+        except KeyError as e:
+            raise NotFound(e)
+        except (ValueError, StatusChangeError, InvalidFlightTimesError) as e:
+            raise ValidationError(e)
         return Response(FlightDetailsSerializer(flight).data, status=status.HTTP_200_OK)
 
 
@@ -89,7 +107,10 @@ class FlightsViewSet(ViewSet):
         body_ser = NewTicketSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        ticket = self.ticket_service.create(Ticket(**body_ser.data, flight_id=id))
+        try:
+            ticket = self.ticket_service.create(Ticket(**body_ser.data, flight_id=id))
+        except ValueError as e:
+            raise ValidationError(e)
         return Response(TicketSerializer(ticket).data, status=status.HTTP_201_CREATED)
 
 
@@ -98,7 +119,12 @@ class FlightsViewSet(ViewSet):
         query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
         if not query_ser.is_valid():
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        tickets = self.ticket_service.get_by_flight_id(id, **query_ser.data)
+        try:
+           tickets = self.ticket_service.get_by_flight_id(id, **query_ser.data)
+        except KeyError as e:
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)
+        except BaseException as e:
+            return Response(e, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(TicketsListSerializer(TicketList(tickets)).data, status=status.HTTP_200_OK)
     
 
@@ -107,7 +133,10 @@ class FlightsViewSet(ViewSet):
         query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
         if not query_ser.is_valid():
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        operation_id = self.flight_service.list_passengers(id, **query_ser.data)
+        try:
+            operation_id = self.flight_service.list_passengers(id, **query_ser.data)
+        except ValueError as e:
+            raise ValidationError(e)
         return Response({'operation_id': operation_id})
 
 
@@ -126,7 +155,10 @@ class TicketsViewSet(ViewSet):
         body_ser = BookTicketDTOSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        ticket = self.ticketsService.book_ticket(id, UUID(body_ser.data["passenger_id"]))
+        try:
+            ticket = self.ticketsService.book_ticket(id, UUID(body_ser.data["passenger_id"]))
+        except ValueError as e:
+            raise ValidationError(e)
         return Response(TicketSerializer(ticket).data, status=status.HTTP_200_OK)
 
 
@@ -149,7 +181,10 @@ class PassengerViewSet(ViewSet):
         body_ser = NewPassengerSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        passenger = self.passenger_service.create(Passenger(**body_ser.data))
+        try:
+            passenger = self.passenger_service.create(Passenger(**body_ser.data))
+        except ValueError as e:
+            raise ValidationError(e)
         return Response(PassengerSerializer(passenger).data, status=status.HTTP_201_CREATED)
     
 
@@ -157,7 +192,10 @@ class PassengerViewSet(ViewSet):
         query_ser = GetMultipleItemsQuerySerializer(data=request.query_params)
         if not query_ser.is_valid():
             return Response(query_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        passengers = self.passenger_service.get_all(**query_ser.data)
+        try:
+            passengers = self.passenger_service.get_all(**query_ser.data)
+        except ValueError as e:
+            raise ValidationError(e)
         return Response(PassengerListSerializer(PassengerList(passengers)).data, status=status.HTTP_200_OK)
 
 

@@ -13,6 +13,8 @@ class TicketService:
     
     
     def create(self, t: Ticket) -> Ticket:
+        if self.flight_repository.get_flight_by_id(t.flight_id) is None:
+            raise KeyError('Flight not found')
         return self.ticket_repository.create(t)
     
     
@@ -27,17 +29,17 @@ class TicketService:
     def book_ticket(self, ticket_id, passenger_id) -> Ticket:
         ticket = self.ticket_repository.get_by_id(ticket_id)
         if ticket is None:
-            raise TicketDoesntExistException('ticket with this id doesn\'t exist')
+            raise KeyError('ticket with this id doesn\'t exist')
         
         if not ticket.can_book():
-            raise SeatNotAvailableException('this seat is already booked')
+            raise SeatNotAvailableError('this seat is already booked')
         
         if self.passenger_repository.get_by_id(passenger_id) is None:
-            raise PassengerDoesntExistException('passenger with this id doesn\'t exist')
+            raise KeyError('passenger with this id doesn\'t exist')
         
         flight = self.flight_repository.get_flight_by_id(ticket.flight_id)
         if not flight.can_be_booked():
-            raise CannotBuyTicketException('cannot buy ticket on this flight')
+            raise CannotBuyTicketError('cannot buy ticket on this flight')
 
         ticket.book(passenger_id)
         self.ticket_repository.create(ticket)

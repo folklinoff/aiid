@@ -28,7 +28,7 @@ class Ticket:
 
     def book(self, passenger_id: UUID) -> None:
         if not self.can_book():
-            raise SeatNotAvailableException("cannot book ticket")
+            raise SeatNotAvailableError("cannot book ticket")
         self.available = False
         self.passenger_id = passenger_id
     
@@ -62,32 +62,26 @@ class FlightStates(Enum):
     FINISHED = 'FINISHED'
 
 
-class StatusChangeException(Exception):
+class StatusChangeError(BaseException):
     def __init__(self, message: object) -> None:
         self.message = message
 
 
-class SeatNotAvailableException(Exception):
+class InvalidFlightTimesError(BaseException):
     def __init__(self, message: object) -> None:
         self.message = message
 
 
-class TicketDoesntExistException(Exception):
+class SeatNotAvailableError(BaseException):
+    def __init__(self, message: object) -> None:
+        self.message = message
+
+class CannotBuyTicketError(BaseException):
     def __init__(self, message: object) -> None:
         self.message = message
 
 
-class PassengerDoesntExistException(Exception):
-    def __init__(self, message: object) -> None:
-        self.message = message
-
-
-class CannotBuyTicketException(Exception):
-    def __init__(self, message: object) -> None:
-        self.message = message
-
-
-class CannotBookTicketOnThisFlight(Exception):
+class CannotBookTicketError(BaseException):
     def __init__(self, message: object) -> None:
         self.message = message
 
@@ -109,6 +103,8 @@ class PassengerList:
 
 class Flight:
     def __init__(self, departure_time: datetime, arrival_time: datetime, departure_point: str, destination_point: str) -> None:
+        if departure_time > arrival_time:
+            raise InvalidFlightTimesError('departure time should be later then arrival time')
         self.id: UUID = uuid4()
         self.status: FlightStates = FlightStates.SCHEDULED
         self.departure_time: datetime = departure_time
@@ -140,7 +136,7 @@ class Flight:
         if not isinstance(val, FlightStates):
             raise TypeError('status must be an instance of flightStates Enum')
         if not self.is_status_transformation_possible(self.status, val):
-            raise StatusChangeException('changing to this status is illegal')
+            raise StatusChangeError('changing to this status is illegal')
         # заглушка для оповещения о задержке
         if val == FlightStates.DELAYED:
             print(f'flight with id {self.id} has been delayed')
@@ -151,13 +147,13 @@ class Flight:
         arrival_time = self.arrival_time if arrival_time is None else arrival_time
         departure_time = self.departure_time if departure_time is None else departure_time
         if self.departure_time > departure_time:
-            raise Exception("new departure time should be later then the current")
+            raise InvalidFlightTimesError("new departure time should be later then the current")
         if departure_time > arrival_time:
-            raise Exception("departure time should be earlier")
+            raise InvalidFlightTimesError("departure time should be earlier")
         new_duration = arrival_time - departure_time
         old_duration = self.arrival_time - self.departure_time
         if new_duration != old_duration:
-            raise Exception(f'''flight duration cannot be changed 
+            raise InvalidFlightTimesError(f'''flight duration cannot be changed 
                             (old: {self.arrival_time} - {self.departure_time} = {old_duration}; 
                             new: {arrival_time} - {departure_time} = {new_duration})''')
         self.departure_time = departure_time

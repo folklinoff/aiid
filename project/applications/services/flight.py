@@ -29,7 +29,7 @@ class FlightService:
 
     def list_passengers(self, id: UUID, limit: int, offset: int):
         if self.flight_repository.get_flight_by_id(id) is None:
-            raise Exception('Flight not found')
+            raise KeyError('Flight not found')
         operation_id = self.ops_service.create_operation()
         scheduler.add_job(self._list_passengers(id, limit, offset),
                           trigger=DateTrigger(), args=(operation_id, ),)
@@ -51,7 +51,7 @@ class FlightService:
     def change_status(self, flight_id: UUID, status: FlightStates, departure_time: datetime = None, arrival_time: datetime = None) -> Flight:
         flight = self.flight_repository.get_flight_by_id(flight_id)
         if flight is None:
-            raise Exception('Flight not found')
+            raise KeyError('Flight not found')
         
         flight.setStatus(FlightStates(status))
         flight.reschedule(departure_time, arrival_time)
