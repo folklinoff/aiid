@@ -59,8 +59,8 @@ class FlightDetailsSerializer(serializers.Serializer):
 
 class NewChangeFlightStatusDTOSerializer(serializers.Serializer):
     status = EnumField(choices=FlightStates)
-    departure_time = serializers.DateTimeField(required=False)
-    arrival_time = serializers.DateTimeField(required=False)
+    departure_time = serializers.DateTimeField(required=False, default=None)
+    arrival_time = serializers.DateTimeField(required=False, default=None)
     
     def create(self, validated_data):
         return ChangeFlightStatusDTO(**validated_data)

@@ -21,7 +21,8 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path('api/flights/', FlightsViewSet.as_view({'get': 'list', 'post': 'create'}), name='flights-list-create'),
-    path('api/flights/<uuid:id>/', FlightsViewSet.as_view({'get': 'retrieve', 'patch': 'update'}), name='flights-retrieve-update'),
+    path('api/flights/<uuid:id>/', FlightsViewSet.as_view({'get': 'retrieve'}), name='flights-retrieve'),
+    path('api/flights/<uuid:id>:change_status', FlightsViewSet.as_view({'post': 'change_status'}), name='flights-change-status'),
     path('api/flights/<uuid:id>/tickets', FlightsViewSet.as_view({'get': 'list_tickets', 'post': 'create_ticket'}), name='flights-get-tickets'),
     path('api/flights/<uuid:id>/passengers', FlightsViewSet.as_view({'get': 'list_passengers'}), name='flights-get-passengers'),
     path('api/tickets/<uuid:id>:book', TicketsViewSet.as_view({'post': 'book'}), name='book-ticket'),

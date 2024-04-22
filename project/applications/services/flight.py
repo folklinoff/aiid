@@ -23,20 +23,20 @@ class FlightService:
         return self.flight_repository.get_flight_by_id(flight_id)
     
     
-    def get_all_flights(self, limit, offset) -> Flights:
+    def get_all_flights(self, limit: int, offset: int) -> Flights:
         return Flights(self.flight_repository.get_all_flights(limit=limit, offset=offset))
 
 
-    def list_passengers(self, id, limit: int, offset: int):
+    def list_passengers(self, id: UUID, limit: int, offset: int):
         if self.flight_repository.get_flight_by_id(id) is None:
             raise Exception('Flight not found')
         operation_id = self.ops_service.create_operation()
-        scheduler.add_job(self._list_passengers(limit, offset),
+        scheduler.add_job(self._list_passengers(id, limit, offset),
                           trigger=DateTrigger(), args=(operation_id, ),)
         return operation_id
 
 
-    def _list_passengers(self, limit: int, offset: int) -> Callable[[UUID], None]:
+    def _list_passengers(self, id: UUID, limit: int, offset: int) -> Callable[[UUID], None]:
         def real_list_passengers(operation_id: UUID):
             passenger_ids = self.flight_repository.get_all_passengers(id, limit, offset)
             passengers = self.passenger_repo.get_by_ids(passenger_ids)
@@ -48,12 +48,13 @@ class FlightService:
         return self.flight_repository.create(flight)
     
 
-    def change_status(self, flight_id: UUID, status: FlightStates) -> Flight:
+    def change_status(self, flight_id: UUID, status: FlightStates, departure_time: datetime = None, arrival_time: datetime = None) -> Flight:
         flight = self.flight_repository.get_flight_by_id(flight_id)
         if flight is None:
             raise Exception('Flight not found')
         
         flight.setStatus(FlightStates(status))
+        flight.reschedule(departure_time, arrival_time)
         self.flight_repository.create(flight)
 
         return self.flight_repository.get_flight_by_id(flight_id)

@@ -27,7 +27,7 @@ class FlightRepository:
         if flight.id is None:
             flight.id = uuid4()
         flights[flight.id] = flight
-        flights_passengers[flight.id] = []
+        flights_passengers[flight.id] = flights_passengers[flight.id] if flight.id in flights_passengers.keys() else []
         return flight
 
 flights: dict[UUID, Flight] = {}

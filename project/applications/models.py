@@ -147,15 +147,19 @@ class Flight:
         self.status = val
     
 
-    def reschedule(self, departure_time: datetime, arrival_time: datetime):
-        if (departure_time is None) or (arrival_time is None):
-            raise Exception("both departure time and arrival time should be specified")
+    def reschedule(self, departure_time: datetime = None, arrival_time: datetime = None):
+        arrival_time = self.arrival_time if arrival_time is None else arrival_time
+        departure_time = self.departure_time if departure_time is None else departure_time
         if self.departure_time > departure_time:
             raise Exception("new departure time should be later then the current")
         if departure_time > arrival_time:
             raise Exception("departure time should be earlier")
-        if arrival_time - departure_time != self.arrival_time - self.departure_time:
-            raise Exception(f"flight duration cannot be changed (old: {self.arrival_time} - {self.departure_time} = {self.arrival_time - self.departure_time}; new: {arrival_time} - {departure_time} = {arrival_time - departure_time})")
+        new_duration = arrival_time - departure_time
+        old_duration = self.arrival_time - self.departure_time
+        if new_duration != old_duration:
+            raise Exception(f'''flight duration cannot be changed 
+                            (old: {self.arrival_time} - {self.departure_time} = {old_duration}; 
+                            new: {arrival_time} - {departure_time} = {new_duration})''')
         self.departure_time = departure_time
         self.arrival_time = arrival_time
 

@@ -75,11 +75,12 @@ class FlightsViewSet(ViewSet):
         return Response(FlightDetailsSerializer(flight).data, status=status.HTTP_200_OK)
 
 
-    def update(self, request):
+    @action(detail=True)
+    def change_status(self, request, id):
         body_ser = NewChangeFlightStatusDTOSerializer(data=request.data)
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        flight = self.flight_service.change_status(**body_ser.data)
+        flight = self.flight_service.change_status(flight_id=id, **body_ser.data)
         return Response(FlightDetailsSerializer(flight).data, status=status.HTTP_200_OK)
 
 

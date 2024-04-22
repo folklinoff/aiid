@@ -2,6 +2,7 @@ import pytest
 import requests
 from uuid import UUID, uuid4
 from datetime import datetime
+from rest_framework import status
 
 base_url = 'http://localhost:8000/api'
 
@@ -21,20 +22,44 @@ test_json_flight_moscow_berlin = {
     'destination_point': 'Berlin',
 }
 
-def test_new_flight_success():
-    resp = requests.post(f'{base_url}/flights/', json=test_json_flight_berlin_moscow).json()
-    check_create_flight_response(resp, test_json_flight_berlin_moscow)
-
 
 def test_new_flight_success():
-    resp = requests.post(f'{base_url}/flights/', json=test_json_flight_moscow_berlin).json()
-    check_create_flight_response(resp, test_json_flight_moscow_berlin)
-    resp = requests.get(f'{base_url}/flights/{resp['id']}').json()
-    assert is_valid_uuid(resp['id'])
-    resp['id'] = ''
-    test_json_flight_moscow_berlin['id'] = ''
-    test_json_flight_moscow_berlin['status'] = 'SCHEDULED'
-    assert resp == test_json_flight_moscow_berlin
+    prev_flights_response = requests.get(f'{base_url}/flights')
+    assert prev_flights_response.status_code == status.HTTP_200_OK
+    prev_flights = prev_flights_response.json()
+    
+    create_response = requests.post(f'{base_url}/flights/', json=test_json_flight_berlin_moscow)
+    assert create_response.status_code == status.HTTP_201_CREATED
+    check_create_flight_response(create_response.json(), test_json_flight_berlin_moscow)
+    
+    new_flights_response = requests.get(f'{base_url}/flights')
+    assert new_flights_response.status_code == status.HTTP_200_OK
+    assert len(new_flights_response.json()['flights']) == len(prev_flights['flights'])+1
+
+
+def test_get_flight():
+    create_response = requests.post(f'{base_url}/flights/', json=test_json_flight_berlin_moscow)
+    assert create_response.status_code == status.HTTP_201_CREATED
+    create_response_body = create_response.json()
+    check_create_flight_response(create_response_body, test_json_flight_berlin_moscow)
+    
+    get_response = requests.get(f'{base_url}/flights/{create_response_body['id']}')
+    assert get_response.status_code == status.HTTP_200_OK
+    
+    get_response_body = get_response.json()
+    assert create_response_body == get_response_body
+
+
+def test_get_flight_change_status():
+    create_response = requests.post(f'{base_url}/flights/', json=test_json_flight_berlin_moscow)
+    assert create_response.status_code == status.HTTP_201_CREATED
+    create_response_body = create_response.json()
+    check_create_flight_response(create_response_body, test_json_flight_berlin_moscow)
+    get_resp = requests.post(
+        f'{base_url}/flights/{create_response_body['id']}:change_status', 
+        json={'status': 'DELAYED'},
+    ).json()
+    
 
 
 def check_create_flight_response(resp, sent):
