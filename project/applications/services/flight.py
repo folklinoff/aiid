@@ -23,8 +23,8 @@ class FlightService:
         return self.flight_repository.get_flight_by_id(flight_id)
     
     
-    def get_all_flights(self, limit: int, offset: int) -> Flights:
-        return Flights(self.flight_repository.get_all_flights(limit=limit, offset=offset))
+    def get_all_flights(self, limit: int, offset: int) -> FlightList:
+        return FlightList(self.flight_repository.get_all_flights(limit=limit, offset=offset))
 
 
     def list_passengers(self, id: UUID, limit: int, offset: int):

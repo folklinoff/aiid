@@ -171,7 +171,7 @@ class ChangeFlightStatusDTO:
         self.arrival_time: datetime = arrival_time
 
 
-class Flights:
+class FlightList:
     def __init__(self, flights: list[Flight]) -> None:
         self.flights = flights
 
