@@ -12,11 +12,11 @@ from applications.scheduler import scheduler, DateTrigger
 from .operations import OperationsService
 
 class FlightService:
-    def __init__(self, flightRepo: FlightRepository, ticketRepo: TicketRepository, passengerRepo: PassengerRepository, ops_service: OperationsService):
+    def __init__(self, flight_repository: FlightRepository, ticket_repository: TicketRepository, passenger_repository: PassengerRepository, ops_service: OperationsService):
         self.ops_service: OperationsService = ops_service
-        self.flight_repository: FlightRepository = flightRepo
-        self.ticket_repository: TicketRepository = ticketRepo
-        self.passenger_repo: PassengerRepository = passengerRepo
+        self.flight_repository: FlightRepository = flight_repository
+        self.ticket_repository: TicketRepository = ticket_repository
+        self.passenger_repo: PassengerRepository = passenger_repository
     
 
     def get_flight_by_id(self, flight_id: UUID) -> Flight:
