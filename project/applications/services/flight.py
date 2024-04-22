@@ -40,7 +40,7 @@ class FlightService:
         def real_list_passengers(operation_id: UUID):
             passenger_ids = self.flight_repository.get_all_passengers(id, limit, offset)
             passengers = self.passenger_repo.get_by_ids(passenger_ids)
-            self.ops_service.finish_operation(operation_id, passengers)
+            self.ops_service.finish_operation(operation_id, PassengerList(passengers))
         return real_list_passengers
 
 

@@ -26,8 +26,9 @@ urlpatterns = [
     path('api/flights/<uuid:id>/tickets', FlightsViewSet.as_view({'get': 'list_tickets', 'post': 'create_ticket'}), name='flights-get-tickets'),
     path('api/flights/<uuid:id>/passengers', FlightsViewSet.as_view({'get': 'list_passengers'}), name='flights-get-passengers'),
     path('api/tickets/<uuid:id>:book', TicketsViewSet.as_view({'post': 'book'}), name='book-ticket'),
+    path('api/tickets/<uuid:id>', TicketsViewSet.as_view({'get': 'retrieve'}), name='book-ticket'),
     path('api/passengers', PassengerViewSet.as_view({'post': 'create', 'get': 'list'}), name='create-list-passengers'),
-    path('operations/<uuid:id>', OperationsViewSet.as_view({ 'get': 'get' }), name='ops'),
+    path('api/operations/<uuid:id>', OperationsViewSet.as_view({ 'get': 'get' }), name='ops'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
 ]

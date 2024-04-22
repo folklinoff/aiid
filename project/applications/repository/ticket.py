@@ -8,7 +8,7 @@ class TicketRepository:
 
     
     def get_by_id(self, ticket_id: int) -> Ticket | None:
-        return tickets[ticket_id] if ticket_id in tickets else None
+        return tickets[ticket_id]
 
     
     def get_by_flight_id(self, flight_id: int, limit: int, offset: int) -> list[Ticket]:

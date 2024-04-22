@@ -4,6 +4,7 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from drf_spectacular.utils import extend_schema_view, extend_schema
@@ -111,6 +112,8 @@ class FlightsViewSet(ViewSet):
             ticket = self.ticket_service.create(Ticket(**body_ser.data, flight_id=id))
         except ValueError as e:
             raise ValidationError(e)
+        except KeyError as e:
+            raise NotFound(e)
         return Response(TicketSerializer(ticket).data, status=status.HTTP_201_CREATED)
 
 
@@ -122,7 +125,7 @@ class FlightsViewSet(ViewSet):
         try:
            tickets = self.ticket_service.get_by_flight_id(id, **query_ser.data)
         except KeyError as e:
-            return Response(e, status=status.HTTP_400_BAD_REQUEST)
+            raise NotFound(e)
         except BaseException as e:
             return Response(e, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(TicketsListSerializer(TicketList(tickets)).data, status=status.HTTP_200_OK)
@@ -148,7 +151,16 @@ class FlightsViewSet(ViewSet):
                     }),
 )
 class TicketsViewSet(ViewSet):
-    ticketsService = TicketServiceFactory.create_ticket()
+    tickets_service = TicketServiceFactory.create_ticket()
+
+    def retrieve(self, _, id=None):
+        try:
+            ticket = self.tickets_service.get_by_id(id)
+        except KeyError as e:
+            raise NotFound(e)
+        except ValueError as e:
+            raise ValidationError(e)
+        return Response(TicketSerializer(ticket).data, status=status.HTTP_200_OK)
 
     @action(detail=True)
     def book(self, request, id=None):
@@ -156,8 +168,10 @@ class TicketsViewSet(ViewSet):
         if not body_ser.is_valid():
             return Response(body_ser.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            ticket = self.ticketsService.book_ticket(id, UUID(body_ser.data["passenger_id"]))
-        except ValueError as e:
+            ticket = self.tickets_service.book_ticket(id, UUID(body_ser.data["passenger_id"]))
+        except KeyError as e:
+            raise NotFound(e)
+        except (ValueError, SeatNotAvailableError) as e:
             raise ValidationError(e)
         return Response(TicketSerializer(ticket).data, status=status.HTTP_200_OK)
 
@@ -206,10 +220,12 @@ class PassengerViewSet(ViewSet):
 class OperationsViewSet(ViewSet):
     ops_service = OperationServiceFactory.create_operation()
 
+    @action(detail=False)
     def get(self, _, id: UUID):
+        hm = uuid4()
         try:
             operation = self.ops_service.get_operation(id)
-            return Response(OperationSerializer(operation).data)
+            return Response(OperationSerializer(operation).data, status=status.HTTP_200_OK)
         except KeyError as e:
             raise NotFound(e)
         except ValueError as e:

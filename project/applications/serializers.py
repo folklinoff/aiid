@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Flight, SeatTypes, Ticket, FlightStates, CreateTicketDTO, Gender, BookTicketDTO, ChangeFlightStatusDTO, Passenger
+from .models import Flight, SeatTypes, Ticket, FlightStates, CreateTicketDTO, Gender, BookTicketDTO, ChangeFlightStatusDTO, Passenger, PassengerList
 from rest_enumfield import EnumField
 
 
@@ -109,7 +109,17 @@ class PassengerListSerializer(serializers.Serializer):
     passengers = PassengerSerializer(many=True)
 
 
+OPERATION_RESULTS_SERIALIZERS_MAP = {
+    type(PassengerList(None)): PassengerListSerializer
+}
+
+
 class OperationSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     done = serializers.BooleanField()
-    result = serializers.JSONField(default={})
+    result = serializers.SerializerMethodField(default={})
+
+    def get_result(self, obj):
+        serializer_class = OPERATION_RESULTS_SERIALIZERS_MAP[type(obj.result)]
+        result = serializer_class(obj.result)
+        return result.data
