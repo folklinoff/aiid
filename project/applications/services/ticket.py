@@ -31,9 +31,6 @@ class TicketService:
         if ticket is None:
             raise KeyError('ticket with this id doesn\'t exist')
         
-        if not ticket.can_book():
-            raise SeatNotAvailableError('this seat is already booked')
-        
         if self.passenger_repository.get_by_id(passenger_id) is None:
             raise KeyError('passenger with this id doesn\'t exist')
         

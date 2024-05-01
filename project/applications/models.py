@@ -124,6 +124,7 @@ class Flight:
         available_status_tranformations = {
             frozenset([FlightStates.SCHEDULED, FlightStates.DELAYED]),
             frozenset([FlightStates.SCHEDULED, FlightStates.READY]),
+            frozenset([FlightStates.SCHEDULED, FlightStates.CANCELLED]),
             frozenset([FlightStates.DELAYED, FlightStates.CANCELLED]),
             frozenset([FlightStates.DELAYED, FlightStates.READY]),
             frozenset([FlightStates.READY, FlightStates.IN_PROGRESS]),
@@ -132,7 +133,7 @@ class Flight:
         return {old, new} in available_status_tranformations
 
 
-    def setStatus(self, val: FlightStates) -> None:
+    def set_status(self, val: FlightStates) -> None:
         if not isinstance(val, FlightStates):
             raise TypeError('status must be an instance of flightStates Enum')
         if not self.is_status_transformation_possible(self.status, val):

@@ -1,10 +1,8 @@
 from uuid import UUID
 
-from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, NotFound
-from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from drf_spectacular.utils import extend_schema_view, extend_schema

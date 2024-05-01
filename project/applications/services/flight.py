@@ -53,12 +53,12 @@ class FlightService:
         if flight is None:
             raise KeyError('Flight not found')
         
-        flight.setStatus(FlightStates(status))
+        flight.set_status(status)
         flight.reschedule(departure_time, arrival_time)
         self.flight_repository.create(flight)
 
         return self.flight_repository.get_flight_by_id(flight_id)
 
 
-    def list_tickets(self, flight_id) -> list[Ticket]:
-        return self.ticket_repository.get_by_flight_id(flight_id)
+    def list_tickets(self, flight_id, limit: int, offset: int) -> list[Ticket]:
+        return self.ticket_repository.get_by_flight_id(flight_id, limit, offset)
